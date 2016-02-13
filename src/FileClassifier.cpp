@@ -88,6 +88,7 @@ processFiles()
             it = range.second)
     {
         range = markedFiles_.equal_range(it->first);
+        prevFileId_ = currentFileId_;
         processEqualSizeFiles(range, result);
     }
 
@@ -104,11 +105,6 @@ void
 FileClassifier::
 processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
 {
-    if (isOneElementRange(sizeEqualRange))
-    {
-        return;
-    }
-
     for_each(sizeEqualRange.first, sizeEqualRange.second,
             [&] (Files::value_type const &v)
             {
@@ -119,6 +115,12 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
     Files filesIdGroups(sizeEqualRange.first, sizeEqualRange.second);
     Files tmpFilesIdGroups;
     std::size_t file_size = (sizeEqualRange.first)->second->size;
+
+    if (isOneElementRange(sizeEqualRange))
+    {
+        output.insert(filesIdGroups.begin(), filesIdGroups.end());
+        return;
+    }
 
     for (std::size_t i = 0; i < file_size; i++)
     {
@@ -132,10 +134,35 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
         filesIdGroups.swap(tmpFilesIdGroups);
         tmpFilesIdGroups.clear();
 
-        std::cout << "Iteration " << i << std::endl;
+        //std::cout << "Iteration " << i << std::endl;
     }
 
+    normalizeFileId(filesIdGroups);
     output.insert(filesIdGroups.begin(), filesIdGroups.end());
+}
+
+void
+FileClassifier::
+normalizeFileId(Files &filesIdGroups)
+{
+    Files normalizedFilesIdGroups;
+    FilesRange range;
+    currentFileId_ = prevFileId_;
+
+    for (auto it = filesIdGroups.begin();
+            it != filesIdGroups.end(); it = range.second)
+    {
+        range = filesIdGroups.equal_range(it->first);
+        for_each(range.first
+               , range.second
+               , [&] (Files::value_type const &v)
+                {
+                    normalizedFilesIdGroups.insert(
+                            make_pair(currentFileId_, v.second));
+                });
+        currentFileId_++;
+    }
+    filesIdGroups.swap(normalizedFilesIdGroups);
 }
 
 void
@@ -161,11 +188,6 @@ void
 FileClassifier::
 separateByNextByte(FilesRange const &range, Files &output)
 {
-    if (isOneElementRange(range))
-    {
-        return;
-    }
-
     Files byteSeparatedFiles;
     for_each(range.first,
              range.second,
@@ -175,7 +197,8 @@ separateByNextByte(FilesRange const &range, Files &output)
                  FilePtr const &file = v.second;
                  file->input_stream.read((char *)&byte, sizeof(byte));
                  byteSeparatedFiles.insert(make_pair(byte, v.second));
-                 std::cout << '\'' << (char)byte << '\'' << std::endl;
+
+                 //std::cout << '\'' << (char)byte << '\'' << std::endl;
              });
 
     addFilesByGroups(byteSeparatedFiles, output);

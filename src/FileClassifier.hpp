@@ -47,7 +47,9 @@ namespace file_classifier
     {
         public:
             FileClassifier()
-                : currentFileId_(0) {}
+                : currentFileId_(0)
+                , prevFileId_(currentFileId_)
+            {}
 
             std::vector<std::string> getFileGroups(std::string const &file_path);
 
@@ -68,10 +70,13 @@ namespace file_classifier
 
             bool isOneElementRange(FilesRange const &range);
 
+            void normalizeFileId(Files &filesIdGroups);
+
         private:
             Files sizeToFileMap_;
             Files markedFiles_;
             std::uintmax_t currentFileId_;
+            std::uintmax_t prevFileId_;
     };
 }
 
