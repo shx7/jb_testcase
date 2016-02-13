@@ -10,8 +10,13 @@ namespace file_classifier
 {
     namespace fs = boost::filesystem;
 
+    typedef std::vector< std::uint8_t > ByteBlock;
+    typedef std::multimap< ByteBlock, fs::path > UniqueFiles;
+
     class FileClassifier
     {
+        typedef std::multimap< std::uintmax_t, fs::path > SizeToFileMap;
+
         public:
             std::vector<std::string> getFileGroups(std::string const &file_path);
 
@@ -20,9 +25,11 @@ namespace file_classifier
         private:
             void printFiles();
 
+            UniqueFiles divideToUniqueGroups(UniqueFiles &unique_files);
+
         private:
             std::string file_path_;
-            std::multimap<std::uintmax_t, fs::path> filesBySize_;
+            SizeToFileMap sizeToFileMap_;
     };
 }
 

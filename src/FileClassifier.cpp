@@ -37,7 +37,7 @@ createFilesList()
                 if (fs::is_regular_file(p))
                 {
                     std::uintmax_t file_size = fs::file_size(p); 
-                    filesBySize_.insert(std::make_pair(file_size, p));
+                    sizeToFileMap_.insert(std::make_pair(file_size, p));
                 }
             }
 
@@ -53,15 +53,15 @@ void
 FileClassifier::
 printFiles()
 {
-    typedef decltype(filesBySize_)::iterator iterator;
-    typedef decltype(filesBySize_)::value_type value_type;
+    typedef SizeToFileMap::iterator iterator;
+    typedef SizeToFileMap::value_type value_type;
     std::pair< iterator, iterator > range;
 
-    for (auto it = filesBySize_.begin();
-            it != filesBySize_.end();
+    for (auto it = sizeToFileMap_.begin();
+            it != sizeToFileMap_.end();
             it = range.second)
     {
-        range = filesBySize_.equal_range(it->first);
+        range = sizeToFileMap_.equal_range(it->first);
 
         std::for_each(range.first
                     , range.second
@@ -72,4 +72,11 @@ printFiles()
 
         std::cout << it->first << std::endl;
     }
+}
+
+UniqueFiles
+FileClassifier::
+divideToUniqueGroups(UniqueFiles &unique_files)
+{
+    UniqueFiles result; 
 }
