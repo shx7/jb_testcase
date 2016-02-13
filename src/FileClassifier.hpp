@@ -54,11 +54,13 @@ namespace file_classifier
 
             void indexFiles();
 
-            Files processEqualSizeFiles(FilesRange const &range);
+            void processEqualSizeFiles(FilesRange const &range, Files &output);
 
-            Files separateByNextByte(FilesRange const &range);
+            void separateByNextByte(FilesRange const &range, Files &output);
 
             void addRegularFile(fs::path p);
+
+            void addFilesByGroups(Files &src, Files &dst);
 
         private:
             Files sizeToFileMap_;

@@ -54,9 +54,7 @@ void
 FileClassifier::
 indexFiles()
 {
-    typedef Files::iterator iterator;
-    typedef Files::value_type value_type;
-    std::pair< iterator, iterator > range;
+    FilesRange range;
 
     for (auto it = sizeToFileMap_.begin();
             it != sizeToFileMap_.end();
@@ -66,7 +64,7 @@ indexFiles()
 
         std::for_each(range.first
                     , range.second
-                    , [&] (value_type &v)
+                    , [&] (Files::value_type &v)
                       {
                           markedFiles_.insert(
                                   std::make_pair(currentFileId_, v.second));
@@ -81,19 +79,22 @@ void
 FileClassifier::
 processFiles()
 {
+    Files result;
     FilesRange range;
     for (auto it = markedFiles_.begin();
             it != markedFiles_.end();
             it = range.second)
     {
         range = markedFiles_.equal_range(it->first);
-        processEqualSizeFiles(range);
+        processEqualSizeFiles(range, result);
     }
+
+    // TODO: iterator throw result
 }
 
-Files
+void
 FileClassifier::
-processEqualSizeFiles(FilesRange const &sizeEqualRange)
+processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
 {
     Files filesIdGroups(sizeEqualRange.first, sizeEqualRange.second);
     Files tmpFilesIdGroups;
@@ -106,19 +107,37 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange)
                 it != filesIdGroups.end(); it = equalIdRange.second)
         {
             equalIdRange = filesIdGroups.equal_range(it->first);
-            Files const &f = separateByNextByte(equalIdRange); 
-            //TODO: add every group
-            //tmpFilesGroups.insert(f.begin(), f.end());
+            separateByNextByte(equalIdRange, tmpFilesIdGroups);
         }
         filesIdGroups.swap(tmpFilesIdGroups);
         tmpFilesIdGroups.clear();
     }
-    return filesIdGroups;
+
+    output.insert(filesIdGroups.begin(), filesIdGroups.end());
 }
 
-Files
+void
 FileClassifier::
-separateByNextByte(FilesRange const &range)
+addFilesByGroups(Files &src, Files &dst)
+{
+    FilesRange range;
+    for (auto it = src.begin();
+            it != src.end(); it = range.second)
+    {
+        range = src.equal_range(it->first);
+        for_each(range.first
+               , range.second
+               , [&] (Files::value_type const &v)
+                {
+                    dst.insert(make_pair(currentFileId_, v.second));
+                });
+        currentFileId_++;
+    }
+}
+
+void
+FileClassifier::
+separateByNextByte(FilesRange const &range, Files &output)
 {
     Files byteSeparatedFiles;
     for_each(range.first,
@@ -130,7 +149,8 @@ separateByNextByte(FilesRange const &range)
                  file->input_stream.read((char *)&byte, sizeof(byte));
                  byteSeparatedFiles.insert(make_pair(byte, v.second));
              });
-    return byteSeparatedFiles;
+
+    addFilesByGroups(byteSeparatedFiles, output);
 }
 
 /*void
