@@ -95,16 +95,25 @@ Files
 FileClassifier::
 processEqualSizeFiles(FilesRange const &sizeEqualRange)
 {
-    Files filesGroups;
-    Files tmpFilesGroups;
+    Files filesIdGroups(sizeEqualRange.first, sizeEqualRange.second);
+    Files tmpFilesIdGroups;
     std::size_t file_size = (sizeEqualRange.first)->second->size;
-    FilesRange range = sizeEqualRange;
 
     for (std::size_t i = 0; i < file_size; i++)
-    { 
-        Files const &f = separateByNextByte(range); 
+    {
+        FilesRange equalIdRange;
+        for (auto it = filesIdGroups.begin();
+                it != filesIdGroups.end(); it = equalIdRange.second)
+        {
+            equalIdRange = filesIdGroups.equal_range(it->first);
+            Files const &f = separateByNextByte(equalIdRange); 
+            //TODO: add every group
+            //tmpFilesGroups.insert(f.begin(), f.end());
+        }
+        filesIdGroups.swap(tmpFilesIdGroups);
+        tmpFilesIdGroups.clear();
     }
-    return filesGroups;
+    return filesIdGroups;
 }
 
 Files
