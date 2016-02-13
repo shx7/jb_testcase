@@ -7,7 +7,7 @@ FileClassifier::
 getFileGroups(std::string const &file_path)
 {
     createFilesList(file_path);
-    processFilesBySize(); 
+    processFiles();
     return std::vector< std::string >();
 }
 
@@ -52,7 +52,7 @@ createFilesList(std::string const &file_path)
 
 void
 FileClassifier::
-processFilesBySize()
+processFiles()
 {
     typedef Files::iterator iterator;
     typedef Files::value_type value_type;
@@ -79,7 +79,7 @@ processFilesBySize()
 
 void
 FileClassifier::
-findDuplicates()
+processFilesBySize()
 {
     FilesRange range;
     for (auto it = markedFiles_.begin();
@@ -95,9 +95,12 @@ Files
 FileClassifier::
 groupFiles(FilesRange const &range)
 {
-    while (true)
-    {
+    Files filesGroups;
+    std::size_t file_size = (range.first)->second->size;
+    for (std::size_t i = 0; i < file_size; i++)
+    { 
     }
+    return filesGroups;
 }
 
 /*void

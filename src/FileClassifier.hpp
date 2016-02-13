@@ -18,9 +18,11 @@ namespace file_classifier
     {
         fs::path file_path;
         std::ifstream input_stream;
+        std::size_t size;
 
         File(fs::path const &file_path)
             : file_path(file_path)
+            , size(0)
         {
             input_stream.open(file_path.string());
 
@@ -48,9 +50,9 @@ namespace file_classifier
             void createFilesList(std::string const &file_path);
 
         private:
-            void processFilesBySize();
+            void processFiles();
 
-            void findDuplicates();
+            void processFilesBySize();
 
             Files groupFiles(FilesRange const &range);
 
