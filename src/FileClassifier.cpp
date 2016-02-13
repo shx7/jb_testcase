@@ -7,7 +7,7 @@ FileClassifier::
 getFileGroups(std::string const &file_path)
 {
     createFilesList(file_path);
-    processFiles();
+    indexFiles();
     return std::vector< std::string >();
 }
 
@@ -52,7 +52,7 @@ createFilesList(std::string const &file_path)
 
 void
 FileClassifier::
-processFiles()
+indexFiles()
 {
     typedef Files::iterator iterator;
     typedef Files::value_type value_type;
@@ -79,7 +79,7 @@ processFiles()
 
 void
 FileClassifier::
-processFilesBySize()
+processFiles()
 {
     FilesRange range;
     for (auto it = markedFiles_.begin();
@@ -87,20 +87,41 @@ processFilesBySize()
             it = range.second)
     {
         range = markedFiles_.equal_range(it->first);
-        groupFiles(range);
+        processEqualSizeFiles(range);
     }
 }
 
 Files
 FileClassifier::
-groupFiles(FilesRange const &range)
+processEqualSizeFiles(FilesRange const &sizeEqualRange)
 {
     Files filesGroups;
-    std::size_t file_size = (range.first)->second->size;
+    Files tmpFilesGroups;
+    std::size_t file_size = (sizeEqualRange.first)->second->size;
+    FilesRange range = sizeEqualRange;
+
     for (std::size_t i = 0; i < file_size; i++)
     { 
+        Files const &f = separateByNextByte(range); 
     }
     return filesGroups;
+}
+
+Files
+FileClassifier::
+separateByNextByte(FilesRange const &range)
+{
+    Files byteSeparatedFiles;
+    for_each(range.first,
+             range.second,
+             [&] (Files::value_type v)
+             {
+                 std::uint8_t byte;
+                 FilePtr &file = v.second;
+                 file->input_stream.read((char *)&byte, sizeof(byte));
+                 byteSeparatedFiles.insert(make_pair(byte, v.second));
+             });
+    return byteSeparatedFiles;
 }
 
 /*void

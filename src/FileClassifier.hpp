@@ -52,9 +52,11 @@ namespace file_classifier
         private:
             void processFiles();
 
-            void processFilesBySize();
+            void indexFiles();
 
-            Files groupFiles(FilesRange const &range);
+            Files processEqualSizeFiles(FilesRange const &range);
+
+            Files separateByNextByte(FilesRange const &range);
 
             void addRegularFile(fs::path p);
 
