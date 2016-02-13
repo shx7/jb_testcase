@@ -4,6 +4,8 @@
 #include <boost/filesystem.hpp>
 
 #include <fstream>
+#include <memory>
+
 #include <map>
 #include <vector>
 
@@ -20,8 +22,10 @@ namespace file_classifier
     class FileClassifier
     {
         typedef std::multimap< std::uintmax_t, fs::path > SizeToFileMap;
-        typedef std::vector< std::uint8_t > ByteBlock;
-        typedef std::multimap< ByteBlock, File > UniqueFiles;
+        //typedef std::vector< std::uint8_t > ByteBlock;
+        typedef char ByteBlock;
+        typedef std::shared_ptr< File > FilePtr;
+        typedef std::multimap< ByteBlock, FilePtr > UniqueFiles;
 
 
         public:
