@@ -74,21 +74,9 @@ printFiles()
     }
 }
 
-FileClassifier::UniqueFiles
+void
 FileClassifier::
-divideToUniqueGroups(FileClassifier::UniqueFiles &unique_files)
+divideToUniqueGroups(LabelledFiles &unique_files)
 {
-    UniqueFiles result; 
-    for (auto &p : unique_files)
-    {
-        FilePtr file = p.second;
-        ByteBlock byte;
-        file->input_stream.read(&byte, sizeof(byte)); 
-        if (file->input_stream.eof())
-        {
-            return result;
-        }
-        result.insert(std::make_pair(byte, file));
-    }
-    return result;
+    LabelledFiles result; 
 }
