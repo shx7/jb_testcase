@@ -66,6 +66,8 @@ namespace file_classifier
 
             void addFilesByGroups(Files &src, Files &dst);
 
+            bool isOneElementRange(FilesRange const &range);
+
         private:
             Files sizeToFileMap_;
             Files markedFiles_;

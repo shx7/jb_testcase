@@ -104,6 +104,11 @@ void
 FileClassifier::
 processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
 {
+    if (isOneElementRange(sizeEqualRange))
+    {
+        return;
+    }
+
     for_each(sizeEqualRange.first, sizeEqualRange.second,
             [&] (Files::value_type const &v)
             {
@@ -156,6 +161,11 @@ void
 FileClassifier::
 separateByNextByte(FilesRange const &range, Files &output)
 {
+    if (isOneElementRange(range))
+    {
+        return;
+    }
+
     Files byteSeparatedFiles;
     for_each(range.first,
              range.second,
@@ -169,4 +179,12 @@ separateByNextByte(FilesRange const &range, Files &output)
              });
 
     addFilesByGroups(byteSeparatedFiles, output);
+}
+
+bool
+FileClassifier::
+isOneElementRange(FilesRange const &range)
+{
+    Files::iterator range_begin = range.first;
+    return ++range_begin == range.second;
 }
