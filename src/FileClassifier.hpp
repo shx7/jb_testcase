@@ -30,6 +30,10 @@ namespace file_classifier
             {
                 throw std::runtime_error("IO error");
             }
+
+            input_stream.seekg(0, input_stream.end);
+            size = input_stream.tellg();
+            input_stream.seekg(0, input_stream.beg);
         }
     };
 
@@ -43,7 +47,9 @@ namespace file_classifier
     {
         public:
             FileClassifier()
-                : currentFileId_(0) {}
+                : currentFileId_(0)
+                , prevFileId_(currentFileId_)
+            {}
 
             std::vector<std::string> getFileGroups(std::string const &file_path);
 
@@ -62,10 +68,17 @@ namespace file_classifier
 
             void addFilesByGroups(Files &src, Files &dst);
 
+            bool isOneElementRange(FilesRange const &range);
+
+            void normalizeFileId(Files &filesIdGroups);
+
         private:
             Files sizeToFileMap_;
             Files markedFiles_;
             std::uintmax_t currentFileId_;
+            std::uintmax_t prevFileId_;
+
+            std::size_t const chunkSize_ = 512;
     };
 }
 
