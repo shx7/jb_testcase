@@ -30,6 +30,10 @@ namespace file_classifier
             {
                 throw std::runtime_error("IO error");
             }
+
+            input_stream.seekg(0, input_stream.end);
+            size = input_stream.tellg();
+            input_stream.seekg(0, input_stream.beg);
         }
     };
 

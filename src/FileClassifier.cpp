@@ -126,6 +126,8 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
         }
         filesIdGroups.swap(tmpFilesIdGroups);
         tmpFilesIdGroups.clear();
+
+        std::cout << "Iteration " << i << std::endl;
     }
 
     output.insert(filesIdGroups.begin(), filesIdGroups.end());
@@ -163,6 +165,7 @@ separateByNextByte(FilesRange const &range, Files &output)
                  FilePtr const &file = v.second;
                  file->input_stream.read((char *)&byte, sizeof(byte));
                  byteSeparatedFiles.insert(make_pair(byte, v.second));
+                 std::cout << '\'' << (char)byte << '\'' << std::endl;
              });
 
     addFilesByGroups(byteSeparatedFiles, output);
