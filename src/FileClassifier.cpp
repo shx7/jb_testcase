@@ -6,56 +6,56 @@ std::vector< std::string >
 FileClassifier::
 getFileGroups(std::string const &file_path)
 {
-    file_path_ = file_path;
-    createFilesList();
-    printFiles(); 
+    createFilesList(file_path);
+    indexFiles();
+    processFiles();
     return std::vector< std::string >();
 }
 
 void
 FileClassifier::
-createFilesList()
+addRegularFile(fs::path p)
 {
-    fs::path file_path(file_path_);
-    if (fs::exists(file_path))
+    std::uintmax_t file_size = fs::file_size(p); 
+    FilePtr ptr(new File(p));
+    sizeToFileMap_.insert(std::make_pair(file_size, ptr));
+}
+
+void
+FileClassifier::
+createFilesList(std::string const &file_path)
+{
+    if (!fs::exists(file_path))
     {
-        std::cout << "File exists" << std::endl;
-        if (fs::is_regular_file(file_path))
-        {
-            std::cout << "FILE" << std::endl;
-        }
-
-        if (fs::is_directory(file_path))
-        {
-            std::cout << "DIR" << std::endl;
-            for (auto it = fs::recursive_directory_iterator(file_path);
-                   it != fs::recursive_directory_iterator(); ++it)
-            {
-                fs::directory_entry& entry = *it;
-                fs::path p = entry.path();
-
-                if (fs::is_regular_file(p))
-                {
-                    std::uintmax_t file_size = fs::file_size(p); 
-                    sizeToFileMap_.insert(std::make_pair(file_size, p));
-                }
-            }
-
-        }
+        throw std::runtime_error("Directory does not exists");
     }
-    else
+
+    if (fs::is_regular_file(file_path))
     {
-        std::cout << "File not exists" << std::endl;
+        throw std::runtime_error("Directory expected");
+    }
+
+    if (fs::is_directory(file_path))
+    {
+        for (auto it = fs::recursive_directory_iterator(file_path);
+               it != fs::recursive_directory_iterator(); ++it)
+        {
+            fs::directory_entry& entry = *it;
+            fs::path p = entry.path();
+
+            if (fs::is_regular_file(p))
+            {
+                addRegularFile(p);
+            }
+        }
     }
 }
 
 void
 FileClassifier::
-printFiles()
+indexFiles()
 {
-    typedef SizeToFileMap::iterator iterator;
-    typedef SizeToFileMap::value_type value_type;
-    std::pair< iterator, iterator > range;
+    FilesRange range;
 
     for (auto it = sizeToFileMap_.begin();
             it != sizeToFileMap_.end();
@@ -65,29 +65,105 @@ printFiles()
 
         std::for_each(range.first
                     , range.second
-                    , [&] (value_type &v)
-                          {
-                              std::cout << v.second.string() << std::endl; 
-                          });
+                    , [&] (Files::value_type const &v)
+                      {
+                          markedFiles_.insert(
+                                  std::make_pair(currentFileId_, v.second));
+                          std::cout << "Inserted!" << std::endl;
+                      });
+        currentFileId_++;
 
-        std::cout << it->first << std::endl;
+        std::cout << "current file id = " << currentFileId_ << std::endl;
     }
 }
 
-FileClassifier::UniqueFiles
+void
 FileClassifier::
-divideToUniqueGroups(FileClassifier::UniqueFiles &unique_files)
+processFiles()
 {
-    UniqueFiles result; 
-    for (auto &p : unique_files)
+    Files result;
+    FilesRange range;
+    for (auto it = markedFiles_.begin();
+            it != markedFiles_.end();
+            it = range.second)
     {
-        File &file = p.second;
-        char byte;
-        file.input_stream.read(&byte, sizeof(byte)); 
-        if (file.input_stream.eof())
-        {
-            return result;
-        }
+        range = markedFiles_.equal_range(it->first);
+        processEqualSizeFiles(range, result);
     }
-    return result;
+
+    // TODO: iterator throw result
+    for_each(result.begin(), result.end(),
+            [&] (Files::value_type const &v)
+            {
+            std::cout << v.first << "# "
+                      << v.second->file_path.string() << std::endl;
+            });
+}
+
+void
+FileClassifier::
+processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
+{
+    for_each(sizeEqualRange.first, sizeEqualRange.second,
+            [&] (Files::value_type const &v)
+            {
+            std::cout << "[EL]: " << v.second->file_path.string() << std::endl;
+            });
+    std::cout << std::endl;
+
+    Files filesIdGroups(sizeEqualRange.first, sizeEqualRange.second);
+    Files tmpFilesIdGroups;
+    std::size_t file_size = (sizeEqualRange.first)->second->size;
+
+    for (std::size_t i = 0; i < file_size; i++)
+    {
+        FilesRange equalIdRange;
+        for (auto it = filesIdGroups.begin();
+                it != filesIdGroups.end(); it = equalIdRange.second)
+        {
+            equalIdRange = filesIdGroups.equal_range(it->first);
+            separateByNextByte(equalIdRange, tmpFilesIdGroups);
+        }
+        filesIdGroups.swap(tmpFilesIdGroups);
+        tmpFilesIdGroups.clear();
+    }
+
+    output.insert(filesIdGroups.begin(), filesIdGroups.end());
+}
+
+void
+FileClassifier::
+addFilesByGroups(Files &src, Files &dst)
+{
+    FilesRange range;
+    for (auto it = src.begin();
+            it != src.end(); it = range.second)
+    {
+        range = src.equal_range(it->first);
+        for_each(range.first
+               , range.second
+               , [&] (Files::value_type const &v)
+                {
+                    dst.insert(make_pair(currentFileId_, v.second));
+                });
+        currentFileId_++;
+    }
+}
+
+void
+FileClassifier::
+separateByNextByte(FilesRange const &range, Files &output)
+{
+    Files byteSeparatedFiles;
+    for_each(range.first,
+             range.second,
+             [&] (Files::value_type const &v)
+             {
+                 std::uint8_t byte;
+                 FilePtr const &file = v.second;
+                 file->input_stream.read((char *)&byte, sizeof(byte));
+                 byteSeparatedFiles.insert(make_pair(byte, v.second));
+             });
+
+    addFilesByGroups(byteSeparatedFiles, output);
 }
