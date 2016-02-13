@@ -77,6 +77,8 @@ namespace file_classifier
             Files markedFiles_;
             std::uintmax_t currentFileId_;
             std::uintmax_t prevFileId_;
+
+            std::size_t const chunkSize_ = 512;
     };
 }
 

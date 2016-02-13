@@ -133,8 +133,6 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
         }
         filesIdGroups.swap(tmpFilesIdGroups);
         tmpFilesIdGroups.clear();
-
-        //std::cout << "Iteration " << i << std::endl;
     }
 
     normalizeFileId(filesIdGroups);
