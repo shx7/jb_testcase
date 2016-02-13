@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <memory>
+#include <stdexcept>
 
 #include <map>
 #include <vector>
@@ -17,60 +18,48 @@ namespace file_classifier
     {
         fs::path file_path;
         std::ifstream input_stream;
-    };
 
-    struct Label
-    {
-        std::size_t id;
-        std::uint8_t byte;
-
-        bool operator<(Label const &label) const
+        File(fs::path const &file_path)
+            : file_path(file_path)
         {
-            if (id == label.id)
+            input_stream.open(file_path.string());
+
+            if (!input_stream.is_open())
             {
-                return byte < label.byte;
+                throw std::runtime_error("IO error");
             }
-            return id < label.id;
         }
     };
 
-    typedef char ByteBlock;
     typedef std::shared_ptr< File > FilePtr;
-    typedef std::multimap< Label, FilePtr > LabelledFiles;
 
-    typedef std::pair<
-          LabelledFiles::iterator
-        , LabelledFiles::iterator > LabelledFilesRange;
-    typedef std::multimap< std::uint8_t, FilePtr > LabelGroup;
+    typedef std::uintmax_t Label;
+    typedef std::multimap< Label, FilePtr > Files;
+    typedef std::pair< Files::iterator, Files::iterator > FilesRange;
 
     class FileClassifier
     {
-        typedef std::multimap< std::uintmax_t, fs::path > SizeToFileMap;
-        //typedef std::vector< std::uint8_t > ByteBlock;
-
         public:
             FileClassifier()
-                : labelCounter_(0) {}
+                : currentFileId_(0) {}
 
             std::vector<std::string> getFileGroups(std::string const &file_path);
 
-            void createFilesList();
+            void createFilesList(std::string const &file_path);
 
         private:
-            void printFiles();
+            void processFilesBySize();
 
-            void divideToUniqueGroups(LabelledFiles &unique_files);
+            void findDuplicates();
 
-            LabelGroup separateByNextByte(LabelledFilesRange const &range);
+            Files groupFiles(FilesRange const &range);
 
-            void addByteSeparatedFiles(
-                      LabelGroup const &byteSeparatedFiles
-                    , LabelledFiles &result);
+            void addRegularFile(fs::path p);
 
         private:
-            std::string file_path_;
-            SizeToFileMap sizeToFileMap_;
-            std::size_t labelCounter_;
+            Files sizeToFileMap_;
+            Files markedFiles_;
+            std::uintmax_t currentFileId_;
     };
 }
 
