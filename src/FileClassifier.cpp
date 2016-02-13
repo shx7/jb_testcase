@@ -78,5 +78,35 @@ void
 FileClassifier::
 divideToUniqueGroups(LabelledFiles &unique_files)
 {
-    LabelledFiles result; 
+    typedef LabelledFiles::iterator iterator;
+    typedef std::multimap< std::uint8_t, FilePtr > LabelGroup;
+
+    std::pair<iterator, iterator> range;
+    std::size_t identificator_counter = 0;
+    std::vector< LabelGroup > groups;
+
+    identificator_counter = 0;
+    bool eof_flag = false;
+
+    for (auto it = unique_files.begin();
+            it != unique_files.end() && !eof_flag;
+            it = range.second)
+    {
+        range = unique_files.equal_range(it->first);
+        LabelGroup subGroup;
+
+        // Process equal range
+        for_each(range.first,
+                 range.second,
+                 [&] (LabelledFiles::value_type v)
+                 {
+                     std::uint8_t byte;
+                     FilePtr &file = v.second;
+                     file->input_stream.read((char *)&byte, sizeof(byte));
+                     subGroup.insert(make_pair(byte, v.second));
+                 });
+        groups.push_back(subGroup);
+
+        eof_flag = range.first->second->input_stream.eof();
+    }
 }

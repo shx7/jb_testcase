@@ -23,6 +23,15 @@ namespace file_classifier
     {
         std::size_t id;
         std::uint8_t byte;
+
+        bool operator<(Label const &label) const
+        {
+            if (id == label.id)
+            {
+                return byte < label.byte;
+            }
+            return id < label.id;
+        }
     };
 
     typedef char ByteBlock;
