@@ -74,9 +74,20 @@ printFiles()
     }
 }
 
-UniqueFiles
+FileClassifier::UniqueFiles
 FileClassifier::
-divideToUniqueGroups(UniqueFiles &unique_files)
+divideToUniqueGroups(FileClassifier::UniqueFiles &unique_files)
 {
     UniqueFiles result; 
+    for (auto &p : unique_files)
+    {
+        File &file = p.second;
+        char byte;
+        file.input_stream.read(&byte, sizeof(byte)); 
+        if (file.input_stream.eof())
+        {
+            return result;
+        }
+    }
+    return result;
 }
