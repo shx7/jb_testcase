@@ -38,6 +38,11 @@ namespace file_classifier
     typedef std::shared_ptr< File > FilePtr;
     typedef std::multimap< Label, FilePtr > LabelledFiles;
 
+    typedef std::pair<
+          LabelledFiles::iterator
+        , LabelledFiles::iterator > LabelledFilesRange;
+    typedef std::multimap< std::uint8_t, FilePtr > LabelGroup;
+
     class FileClassifier
     {
         typedef std::multimap< std::uintmax_t, fs::path > SizeToFileMap;
@@ -55,6 +60,12 @@ namespace file_classifier
             void printFiles();
 
             void divideToUniqueGroups(LabelledFiles &unique_files);
+
+            LabelGroup separateByNextByte(LabelledFilesRange const &range);
+
+            void addByteSeparatedFiles(
+                      LabelGroup const &byteSeparatedFiles
+                    , LabelledFiles &result);
 
         private:
             std::string file_path_;
