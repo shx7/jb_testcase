@@ -43,6 +43,9 @@ namespace file_classifier
     typedef std::multimap< Label, FilePtr > Files;
     typedef std::pair< Files::iterator, Files::iterator > FilesRange;
 
+    typedef std::basic_string< std::uint8_t > ByteBlock;
+    typedef std::multimap< ByteBlock, FilePtr > ByteBlocksToFiles;
+
     class FileClassifier
     {
         public:

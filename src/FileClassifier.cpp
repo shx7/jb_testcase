@@ -192,6 +192,7 @@ separateByNextByte(FilesRange const &range, Files &output)
              [&] (Files::value_type const &v)
              {
                  std::uint8_t byte;
+                 ByteBlock byteBlock;
                  FilePtr const &file = v.second;
                  file->input_stream.read((char *)&byte, sizeof(byte));
                  byteSeparatedFiles.insert(make_pair(byte, v.second));
