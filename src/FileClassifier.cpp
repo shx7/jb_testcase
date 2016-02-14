@@ -150,6 +150,23 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
     Files filesIdGroups, tmpFilesIdGroups;
     hashFiles(sizeEqualRange, filesIdGroups);
 
+    FilesRange range;
+    for (auto it = filesIdGroups.begin();
+            it != filesIdGroups.end(); it = range.second)
+    {
+        range = filesIdGroups.equal_range(it->first);
+
+        for_each(
+                  range.first
+                , range.second
+                , [&] (Files::value_type const &v)
+                {
+                    std::cout << "[EH] : " << v.second->file_path.string()
+                              << std::endl;
+                });
+        std::cout << std::endl;
+    }
+
     std::size_t file_size = (sizeEqualRange.first)->second->size; 
     std::size_t block_size = 0;
     std::cout << "File size = " << file_size << std::endl;
@@ -157,18 +174,27 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
     for (std::size_t i = 0; i < file_size; i += block_size)
     {
         FilesRange equalIdRange; 
-
         for (auto it = filesIdGroups.begin();
                 it != filesIdGroups.end(); it = equalIdRange.second)
-        {
-            std::cout << "[EH]: " << it->second->file_path.string() << std::endl;
+        { 
             equalIdRange = filesIdGroups.equal_range(it->first);
-            block_size = std::min(chunkSize_, file_size - i + 1);
-            separateByNextByte(equalIdRange, tmpFilesIdGroups, block_size);
+            block_size = std::min(chunkSize_, file_size - i);
+
+            if (isOneElementRange(equalIdRange))
+            {
+                tmpFilesIdGroups.insert(
+                        std::make_pair(
+                              currentFileId_
+                            , equalIdRange.first->second));
+                currentFileId_++;
+            }
+            else
+            {
+                separateByNextByte(equalIdRange, tmpFilesIdGroups, block_size);
+            }
         }
-        std::cout << std::endl;
         filesIdGroups.swap(tmpFilesIdGroups);
-        tmpFilesIdGroups.clear();
+        Files().swap(tmpFilesIdGroups);
     }
     std::cout << "File comparing finished. Normalization" << std::endl;
 
