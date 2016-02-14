@@ -14,10 +14,10 @@ getFileGroups(std::string const &file_path)
 
 void
 FileClassifier::
-addRegularFile(fs::path p)
+addRegularFile(fs::path const &file_path)
 {
-    std::uintmax_t file_size = fs::file_size(p); 
-    FilePtr ptr(new File(p));
+    std::uintmax_t file_size = fs::file_size(file_path);
+    FilePtr ptr(new File(file_path));
     sizeToFileMap_.insert(std::make_pair(file_size, ptr));
 }
 
@@ -41,11 +41,10 @@ createFilesList(std::string const &file_path)
                it != fs::recursive_directory_iterator(); ++it)
         {
             fs::directory_entry& entry = *it;
-            fs::path p = entry.path();
-
-            if (fs::is_regular_file(p))
+            fs::path entry_path = entry.path(); 
+            if (fs::is_regular_file(entry_path))
             {
-                addRegularFile(p);
+                addRegularFile(entry_path);
             }
         }
     }
@@ -69,11 +68,8 @@ indexFiles()
                       {
                           markedFiles_.insert(
                                   std::make_pair(currentFileId_, v.second));
-                          std::cout << "Inserted!" << std::endl;
                       });
         currentFileId_++;
-
-        std::cout << "current file id = " << currentFileId_ << std::endl;
     }
 }
 
@@ -123,9 +119,10 @@ hashFiles(FilesRange const &sizeEqualRange, Files &indexedFiles)
                   range.first
                 , range.second
                 , [&] (HashedFiles::value_type const &v)
-                {
-                    indexedFiles.insert(std::make_pair(currentFileId_, v.second));
-                });
+                  {
+                      indexedFiles.insert(
+                              std::make_pair(currentFileId_, v.second));
+                  });
         currentFileId_++;
     }
 }
@@ -134,16 +131,8 @@ void
 FileClassifier::
 processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
 {
-    for_each(sizeEqualRange.first, sizeEqualRange.second,
-            [&] (Files::value_type const &v)
-            {
-            std::cout << "[EL]: " << v.second->file_path.string() << std::endl;
-            });
-    std::cout << std::endl;
-
     if (isOneElementRange(sizeEqualRange))
     {
-        //output.insert(sizeEqualRange.first, sizeEqualRange.second);
         return;
     }
 
@@ -210,10 +199,10 @@ normalizeFileId(Files &filesIdGroups)
         for_each(range.first
                , range.second
                , [&] (Files::value_type const &v)
-                {
-                    normalizedFilesIdGroups.insert(
+                 {
+                     normalizedFilesIdGroups.insert(
                             make_pair(currentFileId_, v.second));
-                });
+                 });
         currentFileId_++;
     }
     filesIdGroups.swap(normalizedFilesIdGroups);
@@ -233,9 +222,9 @@ addFilesByGroups(ByteBlocksToFiles &src, Files &dst)
         for_each(range.first
                , range.second
                , [&] (ByteBlocksToFiles::value_type const &v)
-                {
-                    dst.insert(make_pair(currentFileId_, v.second));
-                });
+                 {
+                     dst.insert(make_pair(currentFileId_, v.second));
+                 });
         currentFileId_++;
     }
 }
@@ -253,8 +242,6 @@ separateByNextBlock(FilesRange const &range, Files &output, std::size_t block_si
                  FilePtr const &file = v.second;
                  file->input_stream.read((char *)&byteBlock[0], block_size);
                  byteSeparatedFiles.insert(make_pair(byteBlock, v.second));
-
-                 //std::cout << '\'' << (char)byte << '\'' << std::endl;
              });
 
     addFilesByGroups(byteSeparatedFiles, output);

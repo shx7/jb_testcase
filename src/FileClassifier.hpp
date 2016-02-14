@@ -98,7 +98,7 @@ namespace file_classifier
                     , Files &output
                     , std::size_t block_size);
 
-            void addRegularFile(fs::path p);
+            void addRegularFile(fs::path const &file_path);
 
             void addFilesByGroups(ByteBlocksToFiles &src, Files &dst);
 

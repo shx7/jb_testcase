@@ -6,7 +6,7 @@
 int main()
 {
     file_classifier::FileClassifier f;
-    f.getFileGroups("../../");
+    f.getFileGroups("../");
     std::cout << "Boost example" << std::endl;
     return 0;
 }
