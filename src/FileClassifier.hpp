@@ -11,7 +11,7 @@
 #include <map>
 #include <vector>
 
-namespace file_classifier
+namespace file_duplicates
 {
     namespace fs = boost::filesystem;
     typedef std::vector< unsigned char > HashSum;
@@ -82,12 +82,12 @@ namespace file_classifier
                 std::ios_base::sync_with_stdio(0);
             }
 
-            std::vector<std::string> getFileGroups(std::string const &file_path);
+            Files getDuplicates(std::string const &file_path);
 
             void createFilesList(std::string const &file_path);
 
         private:
-            void processFiles();
+            void findDuplicates(Files &result);
 
             void indexFiles();
 

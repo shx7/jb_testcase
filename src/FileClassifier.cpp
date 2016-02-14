@@ -1,15 +1,16 @@
 #include "FileClassifier.hpp"
 
-using namespace file_classifier;
+using namespace file_duplicates;
 
-std::vector< std::string >
+Files
 FileClassifier::
-getFileGroups(std::string const &file_path)
+getDuplicates(std::string const &file_path)
 {
+    Files result;
     createFilesList(file_path);
     indexFiles();
-    processFiles();
-    return std::vector< std::string >();
+    findDuplicates(result);
+    return result;
 }
 
 void
@@ -75,9 +76,8 @@ indexFiles()
 
 void
 FileClassifier::
-processFiles()
+findDuplicates(Files &result)
 {
-    Files result;
     FilesRange range;
     for (auto it = markedFiles_.begin();
             it != markedFiles_.end();
@@ -87,14 +87,6 @@ processFiles()
         prevFileId_ = currentFileId_;
         processEqualSizeFiles(range, result);
     }
-
-    // TODO: iterator throw result
-    for_each(result.begin(), result.end(),
-            [&] (Files::value_type const &v)
-            {
-            std::cout << v.first << "# "
-                      << v.second->file_path.string() << std::endl;
-            });
 }
 
 void
@@ -144,21 +136,10 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
             it != filesIdGroups.end(); it = range.second)
     {
         range = filesIdGroups.equal_range(it->first);
-
-        for_each(
-                  range.first
-                , range.second
-                , [&] (Files::value_type const &v)
-                {
-                    std::cout << "[EH] : " << v.second->file_path.string()
-                              << std::endl;
-                });
-        std::cout << std::endl;
     }
 
     std::size_t file_size = (sizeEqualRange.first)->second->size; 
     std::size_t block_size = 0;
-    std::cout << "File size = " << file_size << std::endl;
 
     for (std::size_t i = 0; i < file_size; i += block_size)
     {
@@ -178,7 +159,6 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
         }
         filesIdGroups.swap(tmpFilesIdGroups);
     }
-    std::cout << "File comparing finished. Normalization" << std::endl;
 
     normalizeFileId(filesIdGroups);
     output.insert(filesIdGroups.begin(), filesIdGroups.end());
@@ -231,7 +211,9 @@ addFilesByGroups(ByteBlocksToFiles &src, Files &dst)
 
 void
 FileClassifier::
-separateByNextBlock(FilesRange const &range, Files &output, std::size_t block_size)
+separateByNextBlock(
+          FilesRange const &range
+        , Files &output, std::size_t block_size)
 {
     ByteBlocksToFiles byteSeparatedFiles;
     for_each(range.first,
