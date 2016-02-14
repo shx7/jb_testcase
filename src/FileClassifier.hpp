@@ -43,9 +43,9 @@ namespace file_classifier
         void calculateHashSum()
         {
             std::size_t block_size = 1;
-            std::size_t chunk_size = 4096;
+            std::size_t const chunk_size = 4096;
 
-            std::vector< unsigned char > data(chunk_size);
+            std::array< unsigned char, chunk_size > data;
             MD5_CTX md5Context;
             MD5_Init(&md5Context);
 
@@ -78,7 +78,9 @@ namespace file_classifier
             FileClassifier()
                 : currentFileId_(0)
                 , prevFileId_(currentFileId_)
-            {}
+            {
+                std::ios_base::sync_with_stdio(0);
+            }
 
             std::vector<std::string> getFileGroups(std::string const &file_path);
 
@@ -91,7 +93,7 @@ namespace file_classifier
 
             void processEqualSizeFiles(FilesRange const &range, Files &output);
 
-            void separateByNextByte(
+            void separateByNextBlock(
                       FilesRange const &range
                     , Files &output
                     , std::size_t block_size);
@@ -112,7 +114,7 @@ namespace file_classifier
             std::uintmax_t currentFileId_;
             std::uintmax_t prevFileId_;
 
-            std::size_t const chunkSize_ = 4096;
+            std::size_t const blockSize_ = 4096;
     };
 }
 

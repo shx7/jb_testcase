@@ -143,7 +143,7 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
 
     if (isOneElementRange(sizeEqualRange))
     {
-        output.insert(sizeEqualRange.first, sizeEqualRange.second);
+        //output.insert(sizeEqualRange.first, sizeEqualRange.second);
         return;
     }
 
@@ -174,27 +174,20 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
     for (std::size_t i = 0; i < file_size; i += block_size)
     {
         FilesRange equalIdRange; 
+        tmpFilesIdGroups.clear();
+
         for (auto it = filesIdGroups.begin();
                 it != filesIdGroups.end(); it = equalIdRange.second)
         { 
             equalIdRange = filesIdGroups.equal_range(it->first);
-            block_size = std::min(chunkSize_, file_size - i);
+            block_size = std::min(blockSize_, file_size - i);
 
-            if (isOneElementRange(equalIdRange))
+            if (!isOneElementRange(equalIdRange))
             {
-                tmpFilesIdGroups.insert(
-                        std::make_pair(
-                              currentFileId_
-                            , equalIdRange.first->second));
-                currentFileId_++;
-            }
-            else
-            {
-                separateByNextByte(equalIdRange, tmpFilesIdGroups, block_size);
+                separateByNextBlock(equalIdRange, tmpFilesIdGroups, block_size);
             }
         }
         filesIdGroups.swap(tmpFilesIdGroups);
-        Files().swap(tmpFilesIdGroups);
     }
     std::cout << "File comparing finished. Normalization" << std::endl;
 
@@ -249,7 +242,7 @@ addFilesByGroups(ByteBlocksToFiles &src, Files &dst)
 
 void
 FileClassifier::
-separateByNextByte(FilesRange const &range, Files &output, std::size_t block_size)
+separateByNextBlock(FilesRange const &range, Files &output, std::size_t block_size)
 {
     ByteBlocksToFiles byteSeparatedFiles;
     for_each(range.first,
