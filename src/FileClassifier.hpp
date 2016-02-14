@@ -14,13 +14,14 @@
 namespace file_classifier
 {
     namespace fs = boost::filesystem;
+    typedef std::vector< unsigned char > HashSum;
 
     struct File
     {
         fs::path file_path;
         std::ifstream input_stream;
         std::size_t size;
-        std::vector< unsigned char > hash;
+        HashSum hash;
 
         File(fs::path const &file_path)
             : file_path(file_path)
@@ -41,17 +42,18 @@ namespace file_classifier
 
         void calculateHashSum()
         {
-            std::vector< unsigned char > data(size);
+            std::size_t block_size = 1;
+            std::size_t chunk_size = 4096;
+
+            std::vector< unsigned char > data(chunk_size);
             MD5_CTX md5Context;
             MD5_Init(&md5Context);
 
-            std::size_t block_size = 1;
-            std::size_t chunk_size = 4096;
             for (std::size_t i = 0; i < size; i += block_size)
             {
                 block_size = std::min(chunk_size, size - i);
-                input_stream.read((char *)&data[i], block_size);
-                MD5_Update(&md5Context, &data[i], block_size);
+                input_stream.read((char *)&data[0], block_size);
+                MD5_Update(&md5Context, &data[0], block_size);
             }
             MD5_Final(&hash[0], &md5Context);
         }
@@ -62,6 +64,10 @@ namespace file_classifier
     typedef std::uintmax_t Label;
     typedef std::multimap< Label, FilePtr > Files;
     typedef std::pair< Files::iterator, Files::iterator > FilesRange;
+
+    typedef std::multimap< HashSum, FilePtr > HashedFiles;
+    typedef std::pair< HashedFiles::iterator, HashedFiles::iterator >
+        HashedFilesRange;
 
     typedef std::vector< std::uint8_t > ByteBlock;
     typedef std::multimap< ByteBlock, FilePtr > ByteBlocksToFiles;
@@ -97,6 +103,8 @@ namespace file_classifier
             bool isOneElementRange(FilesRange const &range);
 
             void normalizeFileId(Files &filesIdGroups);
+
+            void hashFiles(FilesRange const &sizeEqualRange, Files &indexedFiles);
 
         private:
             Files sizeToFileMap_;

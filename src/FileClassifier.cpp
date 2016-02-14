@@ -103,6 +103,35 @@ processFiles()
 
 void
 FileClassifier::
+hashFiles(FilesRange const &sizeEqualRange, Files &indexedFiles)
+{
+    HashedFiles hashedFiles;
+    for_each(sizeEqualRange.first, sizeEqualRange.second,
+            [&] (Files::value_type const &v)
+            {
+                v.second->calculateHashSum();
+                hashedFiles.insert(std::make_pair(v.second->hash, v.second));
+            });
+
+    HashedFilesRange range;
+    for (auto it = hashedFiles.begin();
+            it != hashedFiles.end(); it = range.second)
+    {
+        range = hashedFiles.equal_range(it->first);
+
+        for_each(
+                  range.first
+                , range.second
+                , [&] (HashedFiles::value_type const &v)
+                {
+                    indexedFiles.insert(std::make_pair(currentFileId_, v.second));
+                });
+        currentFileId_++;
+    }
+}
+
+void
+FileClassifier::
 processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
 {
     for_each(sizeEqualRange.first, sizeEqualRange.second,
@@ -112,16 +141,16 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
             });
     std::cout << std::endl;
 
-    Files filesIdGroups(sizeEqualRange.first, sizeEqualRange.second);
-    Files tmpFilesIdGroups;
-    std::size_t file_size = (sizeEqualRange.first)->second->size;
-
     if (isOneElementRange(sizeEqualRange))
     {
-        output.insert(filesIdGroups.begin(), filesIdGroups.end());
+        output.insert(sizeEqualRange.first, sizeEqualRange.second);
         return;
     }
 
+    Files filesIdGroups, tmpFilesIdGroups;
+    hashFiles(sizeEqualRange, filesIdGroups);
+
+    std::size_t file_size = (sizeEqualRange.first)->second->size; 
     std::size_t block_size = 0;
     std::cout << "File size = " << file_size << std::endl;
 
@@ -132,10 +161,12 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
         for (auto it = filesIdGroups.begin();
                 it != filesIdGroups.end(); it = equalIdRange.second)
         {
+            std::cout << "[EH]: " << it->second->file_path.string() << std::endl;
             equalIdRange = filesIdGroups.equal_range(it->first);
             block_size = std::min(chunkSize_, file_size - i + 1);
             separateByNextByte(equalIdRange, tmpFilesIdGroups, block_size);
         }
+        std::cout << std::endl;
         filesIdGroups.swap(tmpFilesIdGroups);
         tmpFilesIdGroups.clear();
     }

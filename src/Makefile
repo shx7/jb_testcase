@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-std=c++11 -Wall -Wextra -ggdb
+CFLAGS=-std=c++11 -Wall -Wextra
 LIBS=-lboost_filesystem -lboost_system -lssl -lcrypto
 
 all: main
