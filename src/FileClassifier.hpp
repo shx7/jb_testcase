@@ -43,14 +43,15 @@ namespace file_classifier
         {
             std::vector< unsigned char > data(size);
             MD5_CTX md5Context;
+            MD5_Init(&md5Context);
 
             std::size_t block_size = 1;
             std::size_t chunk_size = 4096;
             for (std::size_t i = 0; i < size; i += block_size)
             {
-                block_size = std::min(chunk_size, size - i + 1);
+                block_size = std::min(chunk_size, size - i);
                 input_stream.read((char *)&data[i], block_size);
-                MD5_Update(&md5Context, &data[0], block_size);
+                MD5_Update(&md5Context, &data[i], block_size);
             }
             MD5_Final(&hash[0], &md5Context);
         }
