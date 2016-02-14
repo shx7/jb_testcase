@@ -2,7 +2,45 @@
 #include <iostream>
 #include <algorithm>
 
+
 #include "FileClassifier.hpp"
+
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/program_options/positional_options.hpp>
+
+std::string
+parseCmdArguments(int argc, char** argv)
+{
+    std::string search_dir;
+
+    namespace po = boost::program_options;
+    po::options_description desc("Usage");
+
+    desc.add_options()
+        ("help", "Print usage")
+        ("search-dir", po::value< std::string >(), "Set search directory path")
+    ;
+
+    po::positional_options_description p;
+    p.add("search-dir", -1);
+
+    po::variables_map variables_map;
+    po::store(po::command_line_parser(argc, argv).options(desc)
+            .positional(p).run(), variables_map);
+    po::notify(variables_map);
+
+    if (variables_map.count("search-dir"))
+    {
+        search_dir = variables_map["search-dir"].as< std::string >();
+    }
+    else
+    {
+        std::cout << desc;
+    }
+    return search_dir;
+}
 
 std::string getPrefixedFileSize(std::size_t file_size)
 {
@@ -63,12 +101,19 @@ printStatistics(file_duplicates::Files const &files)
               << " wasted in total. " << std::endl;
 }
 
-int main()
+int main(int argc, char **argv)
 {
     file_duplicates::FileClassifier f;
+
+    std::string search_dir = parseCmdArguments(argc, argv);
+    if (search_dir.empty())
+    {
+        return -1;
+    }
+
     try
     {
-        file_duplicates::Files const &dups = f.getDuplicates("../../");
+        file_duplicates::Files const &dups = f.getDuplicates(search_dir);
 
         if (dups.empty())
         {
