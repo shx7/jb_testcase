@@ -1,6 +1,6 @@
 CC=g++
 CFLAGS=-std=c++11 -Wall -Wextra
-LIBS=-lboost_filesystem -lboost_system
+LIBS=-lboost_filesystem -lboost_system -lssl -lcrypto
 
 all: main
 	$(CC) $(CFLAGS) $(LIBS) main.o FileClassifier.o -o main.elf

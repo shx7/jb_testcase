@@ -103,6 +103,35 @@ processFiles()
 
 void
 FileClassifier::
+hashFiles(FilesRange const &sizeEqualRange, Files &indexedFiles)
+{
+    HashedFiles hashedFiles;
+    for_each(sizeEqualRange.first, sizeEqualRange.second,
+            [&] (Files::value_type const &v)
+            {
+                v.second->calculateHashSum();
+                hashedFiles.insert(std::make_pair(v.second->hash, v.second));
+            });
+
+    HashedFilesRange range;
+    for (auto it = hashedFiles.begin();
+            it != hashedFiles.end(); it = range.second)
+    {
+        range = hashedFiles.equal_range(it->first);
+
+        for_each(
+                  range.first
+                , range.second
+                , [&] (HashedFiles::value_type const &v)
+                {
+                    indexedFiles.insert(std::make_pair(currentFileId_, v.second));
+                });
+        currentFileId_++;
+    }
+}
+
+void
+FileClassifier::
 processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
 {
     for_each(sizeEqualRange.first, sizeEqualRange.second,
@@ -112,32 +141,53 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
             });
     std::cout << std::endl;
 
-    Files filesIdGroups(sizeEqualRange.first, sizeEqualRange.second);
-    Files tmpFilesIdGroups;
-    std::size_t file_size = (sizeEqualRange.first)->second->size;
-
     if (isOneElementRange(sizeEqualRange))
     {
-        output.insert(filesIdGroups.begin(), filesIdGroups.end());
+        //output.insert(sizeEqualRange.first, sizeEqualRange.second);
         return;
     }
 
+    Files filesIdGroups, tmpFilesIdGroups;
+    hashFiles(sizeEqualRange, filesIdGroups);
+
+    FilesRange range;
+    for (auto it = filesIdGroups.begin();
+            it != filesIdGroups.end(); it = range.second)
+    {
+        range = filesIdGroups.equal_range(it->first);
+
+        for_each(
+                  range.first
+                , range.second
+                , [&] (Files::value_type const &v)
+                {
+                    std::cout << "[EH] : " << v.second->file_path.string()
+                              << std::endl;
+                });
+        std::cout << std::endl;
+    }
+
+    std::size_t file_size = (sizeEqualRange.first)->second->size; 
     std::size_t block_size = 0;
     std::cout << "File size = " << file_size << std::endl;
 
     for (std::size_t i = 0; i < file_size; i += block_size)
     {
         FilesRange equalIdRange; 
+        tmpFilesIdGroups.clear();
 
         for (auto it = filesIdGroups.begin();
                 it != filesIdGroups.end(); it = equalIdRange.second)
-        {
+        { 
             equalIdRange = filesIdGroups.equal_range(it->first);
-            block_size = std::min(chunkSize_, file_size - i + 1);
-            separateByNextByte(equalIdRange, tmpFilesIdGroups, block_size);
+            block_size = std::min(blockSize_, file_size - i);
+
+            if (!isOneElementRange(equalIdRange))
+            {
+                separateByNextBlock(equalIdRange, tmpFilesIdGroups, block_size);
+            }
         }
         filesIdGroups.swap(tmpFilesIdGroups);
-        tmpFilesIdGroups.clear();
     }
     std::cout << "File comparing finished. Normalization" << std::endl;
 
@@ -192,7 +242,7 @@ addFilesByGroups(ByteBlocksToFiles &src, Files &dst)
 
 void
 FileClassifier::
-separateByNextByte(FilesRange const &range, Files &output, std::size_t block_size)
+separateByNextBlock(FilesRange const &range, Files &output, std::size_t block_size)
 {
     ByteBlocksToFiles byteSeparatedFiles;
     for_each(range.first,
