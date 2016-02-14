@@ -43,7 +43,7 @@ namespace file_classifier
     typedef std::multimap< Label, FilePtr > Files;
     typedef std::pair< Files::iterator, Files::iterator > FilesRange;
 
-    typedef std::basic_string< std::uint8_t > ByteBlock;
+    typedef std::vector< std::uint8_t > ByteBlock;
     typedef std::multimap< ByteBlock, FilePtr > ByteBlocksToFiles;
 
     class FileClassifier
@@ -65,11 +65,14 @@ namespace file_classifier
 
             void processEqualSizeFiles(FilesRange const &range, Files &output);
 
-            void separateByNextByte(FilesRange const &range, Files &output);
+            void separateByNextByte(
+                      FilesRange const &range
+                    , Files &output
+                    , std::size_t block_size);
 
             void addRegularFile(fs::path p);
 
-            void addFilesByGroups(Files &src, Files &dst);
+            void addFilesByGroups(ByteBlocksToFiles &src, Files &dst);
 
             bool isOneElementRange(FilesRange const &range);
 
@@ -81,7 +84,7 @@ namespace file_classifier
             std::uintmax_t currentFileId_;
             std::uintmax_t prevFileId_;
 
-            std::size_t const chunkSize_ = 512;
+            std::size_t const chunkSize_ = 4096;
     };
 }
 

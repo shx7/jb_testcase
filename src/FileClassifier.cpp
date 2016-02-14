@@ -122,18 +122,24 @@ processEqualSizeFiles(FilesRange const &sizeEqualRange, Files &output)
         return;
     }
 
-    for (std::size_t i = 0; i < file_size; i++)
+    std::size_t block_size = 0;
+    std::cout << "File size = " << file_size << std::endl;
+
+    for (std::size_t i = 0; i < file_size; i += block_size)
     {
-        FilesRange equalIdRange;
+        FilesRange equalIdRange; 
+
         for (auto it = filesIdGroups.begin();
                 it != filesIdGroups.end(); it = equalIdRange.second)
         {
             equalIdRange = filesIdGroups.equal_range(it->first);
-            separateByNextByte(equalIdRange, tmpFilesIdGroups);
+            block_size = std::min(chunkSize_, file_size - i + 1);
+            separateByNextByte(equalIdRange, tmpFilesIdGroups, block_size);
         }
         filesIdGroups.swap(tmpFilesIdGroups);
         tmpFilesIdGroups.clear();
     }
+    std::cout << "File comparing finished. Normalization" << std::endl;
 
     normalizeFileId(filesIdGroups);
     output.insert(filesIdGroups.begin(), filesIdGroups.end());
@@ -165,16 +171,18 @@ normalizeFileId(Files &filesIdGroups)
 
 void
 FileClassifier::
-addFilesByGroups(Files &src, Files &dst)
+addFilesByGroups(ByteBlocksToFiles &src, Files &dst)
 {
-    FilesRange range;
+    typedef ByteBlocksToFiles::iterator iterator;
+    std::pair< iterator, iterator > range;
+
     for (auto it = src.begin();
             it != src.end(); it = range.second)
     {
         range = src.equal_range(it->first);
         for_each(range.first
                , range.second
-               , [&] (Files::value_type const &v)
+               , [&] (ByteBlocksToFiles::value_type const &v)
                 {
                     dst.insert(make_pair(currentFileId_, v.second));
                 });
@@ -184,18 +192,17 @@ addFilesByGroups(Files &src, Files &dst)
 
 void
 FileClassifier::
-separateByNextByte(FilesRange const &range, Files &output)
+separateByNextByte(FilesRange const &range, Files &output, std::size_t block_size)
 {
-    Files byteSeparatedFiles;
+    ByteBlocksToFiles byteSeparatedFiles;
     for_each(range.first,
              range.second,
              [&] (Files::value_type const &v)
              {
-                 std::uint8_t byte;
-                 ByteBlock byteBlock;
+                 ByteBlock byteBlock(block_size);
                  FilePtr const &file = v.second;
-                 file->input_stream.read((char *)&byte, sizeof(byte));
-                 byteSeparatedFiles.insert(make_pair(byte, v.second));
+                 file->input_stream.read((char *)&byteBlock[0], block_size);
+                 byteSeparatedFiles.insert(make_pair(byteBlock, v.second));
 
                  //std::cout << '\'' << (char)byte << '\'' << std::endl;
              });
