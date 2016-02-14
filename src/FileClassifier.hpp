@@ -2,6 +2,7 @@
 #define FILE_CLASSIFIER_HPP
 
 #include <boost/filesystem.hpp>
+#include <openssl/md5.h>
 
 #include <fstream>
 #include <memory>
@@ -19,10 +20,12 @@ namespace file_classifier
         fs::path file_path;
         std::ifstream input_stream;
         std::size_t size;
+        std::vector< unsigned char > hash;
 
         File(fs::path const &file_path)
             : file_path(file_path)
             , size(0)
+            , hash(MD5_DIGEST_LENGTH)
         {
             input_stream.open(file_path.string());
 
@@ -34,6 +37,22 @@ namespace file_classifier
             input_stream.seekg(0, input_stream.end);
             size = input_stream.tellg();
             input_stream.seekg(0, input_stream.beg);
+        }
+
+        void calculateHashSum()
+        {
+            std::vector< unsigned char > data(size);
+            MD5_CTX md5Context;
+
+            std::size_t block_size = 1;
+            std::size_t chunk_size = 4096;
+            for (std::size_t i = 0; i < size; i += block_size)
+            {
+                block_size = std::min(chunk_size, size - i + 1);
+                input_stream.read((char *)&data[i], block_size);
+                MD5_Update(&md5Context, &data[0], block_size);
+            }
+            MD5_Final(&hash[0], &md5Context);
         }
     };
 
