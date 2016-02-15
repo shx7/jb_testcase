@@ -1,2 +1,0 @@
-project : requirements <source>/boost/filesystem//fs ;
-build-project src ;
