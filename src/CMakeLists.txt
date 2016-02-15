@@ -1,11 +1,3 @@
-cmake_minimum_required(VERSION 3.1)
-
-project(duplicate_search)
-set(MAIN_SRC main.cpp)
-set(MAIN_EXE duplicate_search)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 set(FILE_CLASSIFIER_SRC FileClassifier.cpp)
 set(UTIL_SRC Util.cpp)
 set(PROJECT_INCLUDE_DIR "../include/")
