@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(FILE_CLASSIFIER_SRC FileClassifier.cpp)
 set(UTIL_SRC Util.cpp)
+set(PROJECT_INCLUDE_DIR "../include/")
 
 find_package(Boost 1.55 COMPONENTS
         filesystem program_options system
@@ -40,6 +41,8 @@ set_target_properties(${MAIN_EXE} PROPERTIES
 include_directories(${Boost_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
 
-INCLUDE_DIRECTORIES(${OPENSSL_INCLUDE_DIR})
-LINK_DIRECTORIES(${OPENSSL_LIBRARY_DIRS})
+include_directories(${OPENSSL_INCLUDE_DIR})
+link_directories(${OPENSSL_LIBRARY_DIRS})
+
+include_directories(${PROJECT_INCLUDE_DIR})
 target_link_libraries(${MAIN_EXE} ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES})
