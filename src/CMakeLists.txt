@@ -12,22 +12,24 @@ set(UTIL_SRC Util.cpp)
 find_package(Boost 1.55 COMPONENTS
         filesystem program_options system
         REQUIRED)
-if (!Boost_FOUND)
+if (Boost_FOUND)
+    message(STATUS "Boost include dir: ${Boost_INCLUDE_DIR}")
+    message(STATUS "Boost libraries path: ${Boost_LIBRARY_DIRS}")
+    message(STATUS "Boost libraries path: ${Boost_LIBRARIES}")
+    set(Boost_USE_STATIC_LIBS OFF)
+    set(Boost_USE_STATIC_RUNTIME OFF) 
+else()
     message(FATAL_ERROR "Boost not found") 
 endif()
-message(STATUS "Boost include dir: ${Boost_INCLUDE_DIR}")
-message(STATUS "Boost libraries path: ${Boost_LIBRARY_DIRS}")
-message(STATUS "Boost libraries path: ${Boost_LIBRARIES}")
 
 find_package(OpenSSL)
 if (OPENSSL_FOUND)
-    message(STATUS "OpenSSL found")
+    message(STATUS "OpenSSL found. Version ${OPENSSL_VERSION}") 
+    message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
+    message(STATUS "OpenSSL libraries path: ${OPENSSL_LIBRARIES}")
 else()
     message(FATAL_ERROR "OpenSSL not found") 
 endif()
-
-message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
-message(STATUS "OpenSSL libraries path: ${OPENSSL_LIBRARIES}")
 
 add_executable(${MAIN_EXE} ${MAIN_SRC} ${FILE_CLASSIFIER_SRC} ${UTIL_SRC})
 set_target_properties(${MAIN_EXE} PROPERTIES
