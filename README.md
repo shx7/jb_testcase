@@ -1,4 +1,4 @@
-### jetbrains_testcase
+### jb_testcase
 
 Программа собиралась под linux (debian wheezy). Для сборки используется CMake версии >=3.2.</br>
 Библиотеки, от которых зависит проект:
